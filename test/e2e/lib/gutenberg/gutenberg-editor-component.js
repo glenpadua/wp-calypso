@@ -253,6 +253,10 @@ export default class GutenbergEditorComponent extends AsyncBaseContainer {
 				prefix = 'coblocks-';
 				blockClass = 'dynamic-separator';
 				break;
+			case 'Columns':
+				prefix = '';
+				blockClass = 'columns';
+				break;
 		}
 
 		const inserterBlockItemSelector = By.css(
