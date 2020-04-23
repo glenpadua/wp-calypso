@@ -5,11 +5,23 @@
 import { isObjectLike, isUndefined, omit } from 'lodash';
 import debug from 'debug';
 
+/**
+ * Internal dependencies
+ */
+import { isE2ETest, isSandboxed } from '../../../utils';
+
 const tracksDebug = debug( 'wpcom-block-editor:analytics:tracks' );
+const e2ETracksDebug = debug( 'wpcom-block-editor:e2e' );
 
 // In case Tracks hasn't loaded.
 if ( typeof window !== 'undefined' ) {
 	window._tkq = window._tkq || [];
+}
+
+const E2E_STACK_SIZE = 20;
+if ( isSandboxed() || isE2ETest() ) {
+	e2ETracksDebug( 'E2E env' );
+	window._e2eEventsStack = [];
 }
 
 // Adapted from the analytics lib :(
@@ -24,7 +36,7 @@ export default ( eventName, eventProperties ) => {
 	const customProperties = {
 		blog_id: window._currentSiteId,
 		site_type: window._currentSiteType,
-		user_locale: window._currentUserLocale,
+		user_locale: window._currentUserLocale
 	};
 
 	eventProperties = eventProperties || {};
@@ -60,5 +72,24 @@ export default ( eventName, eventProperties ) => {
 
 	tracksDebug( 'Recording event %o with actual props %o', eventName, eventProperties );
 
-	window._tkq.push( [ 'recordEvent', eventName, eventProperties ] );
+	const record = [ 'recordEvent', eventName, eventProperties ];
+
+	if ( isSandboxed() || isE2ETest() ) {
+		e2ETracksDebug(
+			'pushing %s event to E2E stack - current size: %o',
+			record[ 0 ],
+			window._e2eEventsStack.length
+		);
+		// Add the record at the beginning of the stack.
+		window._e2eEventsStack.unshift( record );
+
+		// Apply FIFO behaviour to E2E stack.
+		if ( window._e2eEventsStack.length > E2E_STACK_SIZE ) {
+			// Remove the last item.
+			const removeRecord = window._e2eEventsStack.pop();
+			e2ETracksDebug( 'removing %s last event from E2E stack', removeRecord[ 0 ] );
+		}
+	}
+
+	window._tkq.push( record );
 };
