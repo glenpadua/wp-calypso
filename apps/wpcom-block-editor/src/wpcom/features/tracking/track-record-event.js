@@ -8,7 +8,7 @@ import debug from 'debug';
 /**
  * Internal dependencies
  */
-import { isE2ETest, isSandboxed } from '../../../utils';
+import { isE2ETest } from '../../../utils';
 
 const tracksDebug = debug( 'wpcom-block-editor:analytics:tracks' );
 const e2ETracksDebug = debug( 'wpcom-block-editor:e2e' );
@@ -19,7 +19,7 @@ if ( typeof window !== 'undefined' ) {
 }
 
 const E2E_STACK_SIZE = 20;
-if ( isSandboxed() || isE2ETest() ) {
+if ( isE2ETest() ) {
 	e2ETracksDebug( 'E2E env' );
 	window._e2eEventsStack = [];
 }
@@ -36,7 +36,7 @@ export default ( eventName, eventProperties ) => {
 	const customProperties = {
 		blog_id: window._currentSiteId,
 		site_type: window._currentSiteType,
-		user_locale: window._currentUserLocale
+		user_locale: window._currentUserLocale,
 	};
 
 	eventProperties = eventProperties || {};
@@ -74,7 +74,7 @@ export default ( eventName, eventProperties ) => {
 
 	const record = [ 'recordEvent', eventName, eventProperties ];
 
-	if ( isSandboxed() || isE2ETest() ) {
+	if ( isE2ETest() ) {
 		e2ETracksDebug(
 			'pushing %s event to E2E stack - current size: %o',
 			record[ 0 ],

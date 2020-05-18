@@ -38,7 +38,7 @@ export function sendMessage( message ) {
  * @returns {Promise} Promise that resolves when the editor has been initialized.
  */
 export const isEditorReadyWithBlocks = async () =>
-	new Promise( resolve => {
+	new Promise( ( resolve ) => {
 		const unsubscribe = subscribe( () => {
 			const isCleanNewPost = select( 'core/editor' ).isCleanNewPost();
 
@@ -74,5 +74,3 @@ const E2E_USER_AGENT = 'wp-e2e-tests';
 export const isE2ETest = () => {
 	return typeof navigator !== 'undefined' && navigator.userAgent.includes( E2E_USER_AGENT ); //eslint-disable-line no-undef
 };
-
-export const isSandboxed = () => !! window._isSandboxed;
