@@ -8,31 +8,23 @@ import wp from 'lib/wp';
 import { CheckoutErrorBoundary } from '@automattic/composite-checkout';
 import { useTranslate } from 'i18n-calypso';
 import cookie from 'cookie';
-import { isArray } from 'lodash';
 
 /**
  * Internal Dependencies
  */
 import CheckoutContainer from './checkout/checkout-container';
-import IncludedProductNoticeContent from './checkout/included-product-notice-content';
-import OwnedProductNoticeContent from './checkout/owned-product-notice-content';
+import PrePurchaseNotices from './checkout/prepurchase-notices';
 import CompositeCheckout from './composite-checkout/composite-checkout';
 import { fetchStripeConfiguration } from './composite-checkout/payment-method-helpers';
-import { getPlanByPathSlug } from 'lib/plans';
-import { GROUP_JETPACK, JETPACK_PLANS } from 'lib/plans/constants';
+import { JETPACK_PLANS } from 'lib/plans/constants';
 import { JETPACK_PRODUCTS_LIST } from 'lib/products-values/constants';
-import { isJetpackBackup, isJetpackBackupSlug } from 'lib/products-values';
 import { StripeHookProvider } from 'lib/stripe';
 import config from 'config';
 import { getCurrentUserCountryCode } from 'state/current-user/selectors';
 import getCurrentLocaleSlug from 'state/selectors/get-current-locale-slug';
-import { isJetpackSite, getSiteProducts, getSitePlan } from 'state/sites/selectors';
+import { isJetpackSite } from 'state/sites/selectors';
 import isSiteAutomatedTransfer from 'state/selectors/is-site-automated-transfer';
 import { logToLogstash } from 'state/logstash/actions';
-import {
-	isPlanIncludingSiteBackup,
-	isBackupProductIncludedInSitePlan,
-} from 'state/sites/products/conflicts';
 import { abtest } from 'lib/abtest';
 import Recaptcha from 'signup/recaptcha';
 
@@ -66,45 +58,16 @@ export default function CheckoutSystemDecider( {
 	isNoSiteCart,
 } ) {
 	const siteId = selectedSite?.ID;
-	const jetpackPlan = getPlanByPathSlug( product, GROUP_JETPACK );
 
 	const isJetpack = useSelector( ( state ) => isJetpackSite( state, siteId ) );
 	const isAtomic = useSelector( ( state ) => isSiteAutomatedTransfer( state, siteId ) );
 	const countryCode =
 		useSelector( ( state ) => getCurrentUserCountryCode( state ) ) || getGeoLocationFromCookie();
 	const locale = useSelector( ( state ) => getCurrentLocaleSlug( state ) );
-	const isJetpackPlanIncludingSiteBackup = useSelector( ( state ) =>
-		jetpackPlan ? isPlanIncludingSiteBackup( state, siteId, jetpackPlan.getStoreSlug() ) : null
-	);
-	const isBackupIncludedInSitePlan = useSelector( ( state ) =>
-		isJetpackBackupSlug( product )
-			? isBackupProductIncludedInSitePlan( state, siteId, product )
-			: null
-	);
-	const currentProducts = useSelector( ( state ) => getSiteProducts( state, siteId ) );
-	const currentPlan = useSelector( ( state ) => getSitePlan( state, siteId ) );
 	const reduxDispatch = useDispatch();
 	const translate = useTranslate();
 
-	let infoMessage;
-
-	if ( isJetpackPlanIncludingSiteBackup && selectedSite ) {
-		const backupProduct = isArray( currentProducts ) && currentProducts.find( isJetpackBackup );
-
-		infoMessage = backupProduct && (
-			<OwnedProductNoticeContent product={ backupProduct } selectedSite={ selectedSite } />
-		);
-	}
-
-	if ( isBackupIncludedInSitePlan && selectedSite ) {
-		infoMessage = currentPlan && (
-			<IncludedProductNoticeContent
-				plan={ currentPlan }
-				productSlug={ product }
-				selectedSite={ selectedSite }
-			/>
-		);
-	}
+	const prepurchaseNotices = <PrePurchaseNotices cart={ cart } />;
 
 	const checkoutVariant = getCheckoutVariant(
 		cart,
@@ -199,7 +162,7 @@ export default function CheckoutSystemDecider( {
 							plan={ plan }
 							cart={ cart }
 							isComingFromUpsell={ isComingFromUpsell }
-							infoMessage={ infoMessage }
+							infoMessage={ prepurchaseNotices }
 							isLoggedOutCart={ isLoggedOutCart }
 							isNoSiteCart={ isNoSiteCart }
 							getCart={ isLoggedOutCart || isNoSiteCart ? () => Promise.resolve( cart ) : null }
@@ -227,7 +190,7 @@ export default function CheckoutSystemDecider( {
 			redirectTo={ redirectTo }
 			upgradeIntent={ upgradeIntent }
 			clearTransaction={ clearTransaction }
-			infoMessage={ infoMessage }
+			infoMessage={ prepurchaseNotices }
 		/>
 	);
 }
