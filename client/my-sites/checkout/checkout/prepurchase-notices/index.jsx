@@ -17,8 +17,8 @@ import {
 	isBackupProductIncludedInSitePlan,
 } from 'state/sites/products/conflicts';
 import Notice from 'components/notice';
-import IncludedProductNoticeContent from '../included-product-notice-content';
-import OwnedProductNoticeContent from '../owned-product-notice-content';
+import IncludedProductNoticeContent from './included-product-notice-content';
+import OwnedProductNoticeContent from './owned-product-notice-content';
 
 import './style.scss';
 
