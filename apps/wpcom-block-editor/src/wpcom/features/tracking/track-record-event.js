@@ -18,6 +18,9 @@ if ( typeof window !== 'undefined' ) {
 	window._tkq = window._tkq || [];
 }
 
+// Enable a events stack for e2e testing purposes
+// on e2e test environments only.
+// see https://github.com/Automattic/wp-calypso/pull/41329.
 const E2E_STACK_SIZE = 20;
 if ( isE2ETest() ) {
 	e2ETracksDebug( 'E2E env' );
