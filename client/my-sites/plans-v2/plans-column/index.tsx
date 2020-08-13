@@ -1,8 +1,8 @@
 /**
  * External dependencies
  */
-import React, { useMemo } from 'react';
 import { translate } from 'i18n-calypso';
+import React, { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 
 /**
@@ -15,9 +15,14 @@ import {
 	OPTIONS_JETPACK_SECURITY,
 	OPTIONS_JETPACK_SECURITY_MONTHLY,
 } from '../constants';
+import RenewalNotice from '../plan-renewal-notice';
+import { useLocalizedMoment } from 'components/localized-moment';
 import { PLAN_JETPACK_FREE } from 'lib/plans/constants';
+import { isCloseToExpiration } from 'lib/purchases';
+import { getPurchaseByProductSlug } from 'lib/purchases/utils';
 import { getProductCost, isProductsListFetching } from 'state/products-list/selectors';
 import { getCurrentUserCurrencyCode } from 'state/current-user/selectors';
+import { getSitePurchases } from 'state/purchases/selectors';
 import getSitePlan from 'state/sites/selectors/get-site-plan';
 import JetpackBundleCard from 'components/jetpack/card/jetpack-bundle-card';
 import JetpackPlanCard from 'components/jetpack/card/jetpack-plan-card';
@@ -27,6 +32,7 @@ import FormattedHeader from 'components/formatted-header';
  * Type dependencies
  */
 import type { Duration, PurchaseCallback, ProductType, SelectorProduct } from '../types';
+import type { Purchase } from 'lib/purchases/types';
 
 interface PlanColumnType {
 	duration: Duration;
@@ -35,7 +41,11 @@ interface PlanColumnType {
 	siteId: number | null;
 }
 
-type PlanWithBought = SelectorProduct & { owned: boolean; legacy: boolean };
+type PlanWithBought = SelectorProduct & {
+	owned: boolean;
+	legacy: boolean;
+	purchase: Purchase | null;
+};
 
 const PlanComponent = ( {
 	plan,
@@ -46,6 +56,7 @@ const PlanComponent = ( {
 	onClick: PurchaseCallback;
 	currencyCode: string;
 } ) => {
+	const moment = useLocalizedMoment();
 	const price =
 		useSelector( ( state ) => getProductCost( state, plan.costProductSlug || plan.productSlug ) ) ||
 		0;
@@ -54,12 +65,18 @@ const PlanComponent = ( {
 	)
 		? JetpackBundleCard
 		: JetpackPlanCard;
+	const { purchase } = plan;
+	const isExpiring = purchase && isCloseToExpiration( purchase );
+	const showExpiryNotice = plan.legacy && isExpiring;
+
 	return (
 		<CardComponent
 			iconSlug={ plan.iconSlug }
 			productName={ plan.displayName }
 			subheadline={ plan.tagline }
-			description={ plan.description }
+			description={
+				showExpiryNotice ? <RenewalNotice purchase={ purchase as Purchase } /> : plan.description
+			}
 			currencyCode={ currencyCode }
 			billingTimeFrame={ durationToText( plan.term ) }
 			buttonLabel={ productButtonLabel( plan ) }
@@ -68,6 +85,7 @@ const PlanComponent = ( {
 			originalPrice={ price }
 			isOwned={ plan.owned }
 			isDeprecated={ plan.legacy }
+			expiryDate={ showExpiryNotice ? moment( ( purchase as Purchase ).expiryDate ) : undefined }
 		/>
 	);
 };
@@ -77,6 +95,7 @@ const PlansColumn = ( { duration, onPlanClick, productType, siteId }: PlanColumn
 	const isFetchingProducts = useSelector( ( state ) => isProductsListFetching( state ) );
 	const currentPlan =
 		useSelector( ( state ) => getSitePlan( state, siteId ) )?.product_slug || null;
+	const purchases = useSelector( ( state ) => getSitePurchases( state, siteId ) );
 
 	// This gets all plan objects for us to parse.
 	const planObjects: PlanWithBought[] = useMemo( () => {
@@ -102,6 +121,7 @@ const PlansColumn = ( { duration, onPlanClick, productType, siteId }: PlanColumn
 				...product,
 				owned: product.productSlug === currentPlan,
 				legacy: false,
+				purchase: getPurchaseByProductSlug( purchases, product.productSlug ) || null,
 			} ) );
 
 		// If the user does not own a current plan, get it and insert it on the top of the plan array.
@@ -109,11 +129,16 @@ const PlansColumn = ( { duration, onPlanClick, productType, siteId }: PlanColumn
 			const item = slugToItem( currentPlan );
 			const currentPlanSelector = item && itemToSelectorProduct( item );
 			if ( currentPlanSelector ) {
-				plans.unshift( { ...currentPlanSelector, owned: true, legacy: true } );
+				plans.unshift( {
+					...currentPlanSelector,
+					owned: true,
+					legacy: true,
+					purchase: getPurchaseByProductSlug( purchases, currentPlanSelector.productSlug ) || null,
+				} );
 			}
 		}
 		return plans;
-	}, [ duration, productType, currentPlan ] );
+	}, [ duration, productType, currentPlan, purchases ] );
 
 	if ( ! currencyCode || isFetchingProducts ) {
 		return null; // TODO: Loading component!
