@@ -33,14 +33,7 @@ import { getJetpackProductShortName } from 'lib/products-values/get-jetpack-prod
 /**
  * Type dependencies
  */
-import type {
-	Duration,
-	SelectorProduct,
-	SelectorProductSlug,
-	AvailableProductData,
-	SelectorProductCost,
-	DurationString,
-} from './types';
+import type { Duration, SelectorProduct, SelectorProductSlug, DurationString } from './types';
 import type { JetpackPlanSlugs, Plan } from 'lib/plans/types';
 import type { JetpackProductSlug } from 'lib/products-values/types';
 
@@ -84,25 +77,6 @@ export function productButtonLabel( product: SelectorProduct ): TranslateResult 
 			context: '%s is the name of a product',
 		} )
 	);
-}
-
-export function getProductPrices(
-	product: SelectorProduct,
-	availableProducts: Record< string, AvailableProductData >
-): SelectorProductCost {
-	const availableProduct = availableProducts[ product.costProductSlug || product.productSlug ];
-	// Return if not annual price.
-	if ( product.term !== TERM_ANNUALLY || ! availableProduct || ! product.monthlyProductSlug ) {
-		return {
-			cost: get( availableProduct, 'cost', 0 ),
-		};
-	}
-
-	const relatedAvailableProduct = availableProducts[ product.monthlyProductSlug ];
-	return {
-		discountCost: get( availableProduct, 'cost', 0 ),
-		cost: get( relatedAvailableProduct, 'cost', 0 ) * 12,
-	};
 }
 
 /**
