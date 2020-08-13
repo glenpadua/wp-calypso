@@ -195,7 +195,7 @@ export function itemToSelectorProduct(
 				context: '%s is the name of a product',
 			} ),
 			term: item.term,
-			features: [],
+			features: { items: [] },
 		};
 	} else if ( objectIsPlan( item ) ) {
 		const productSlug = item.getStoreSlug();
@@ -203,7 +203,8 @@ export function itemToSelectorProduct(
 		if ( item.term === TERM_ANNUALLY ) {
 			monthlyProductSlug = getMonthlyPlanByYearly( productSlug );
 		}
-		const iconAppend = JETPACK_RESET_PLANS.includes( productSlug ) ? '_v2' : '';
+		const isResetPlan = JETPACK_RESET_PLANS.includes( productSlug );
+		const iconAppend = isResetPlan ? '_v2' : '';
 		const type = JETPACK_SECURITY_PLANS.includes( productSlug ) ? ITEM_TYPE_BUNDLE : ITEM_TYPE_PLAN;
 		return {
 			productSlug,
@@ -215,7 +216,8 @@ export function itemToSelectorProduct(
 			description: item.getDescription(),
 			monthlyProductSlug,
 			term: item.term === TERM_BIENNIALLY ? TERM_ANNUALLY : item.term,
-			features: [],
+			features: { items: [] },
+			legacy: ! isResetPlan,
 		};
 	}
 	return null;
