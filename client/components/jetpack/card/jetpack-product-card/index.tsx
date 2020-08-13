@@ -176,7 +176,9 @@ const JetpackProductCard: FunctionComponent< Props > = ( {
 				) }
 				{ description && <p className="jetpack-product-card__description">{ description }</p> }
 			</div>
-			<JetpackProductCardFeatures features={ features } isExpanded={ isExpanded } />
+			{ features.items.length > 0 && (
+				<JetpackProductCardFeatures features={ features } isExpanded={ isExpanded } />
+			) }
 		</div>
 	);
 };
