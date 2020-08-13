@@ -7,13 +7,20 @@ import { get } from 'lodash';
 /**
  * Internal dependencies
  */
-import { PRODUCTS_WITH_OPTIONS, OPTIONS_SLUG_MAP } from './constants';
+import {
+	PRODUCTS_WITH_OPTIONS,
+	OPTIONS_SLUG_MAP,
+	ITEM_TYPE_PRODUCT,
+	ITEM_TYPE_BUNDLE,
+	ITEM_TYPE_PLAN,
+} from './constants';
 import {
 	TERM_ANNUALLY,
 	TERM_MONTHLY,
 	TERM_BIENNIALLY,
 	JETPACK_LEGACY_PLANS,
 	JETPACK_RESET_PLANS,
+	JETPACK_SECURITY_PLANS,
 } from 'lib/plans/constants';
 import { getPlan, getMonthlyPlanByYearly } from 'lib/plans';
 import { JETPACK_PRODUCT_PRICE_MATRIX } from 'lib/products-values/constants';
@@ -178,6 +185,8 @@ export function itemToSelectorProduct(
 			productSlug: item.product_slug,
 			iconSlug: `${ item.product_slug }_v2`,
 			displayName: getJetpackProductDisplayName( item ),
+			type: ITEM_TYPE_PRODUCT,
+			subtypes: [],
 			tagline: getJetpackProductTagline( item ),
 			description: getJetpackProductDescription( item ),
 			monthlyProductSlug,
@@ -187,7 +196,6 @@ export function itemToSelectorProduct(
 			} ),
 			term: item.term,
 			features: [],
-			subtypes: [],
 		};
 	} else if ( objectIsPlan( item ) ) {
 		const productSlug = item.getStoreSlug();
@@ -196,16 +204,18 @@ export function itemToSelectorProduct(
 			monthlyProductSlug = getMonthlyPlanByYearly( productSlug );
 		}
 		const iconAppend = JETPACK_RESET_PLANS.includes( productSlug ) ? '_v2' : '';
+		const type = JETPACK_SECURITY_PLANS.includes( productSlug ) ? ITEM_TYPE_BUNDLE : ITEM_TYPE_PLAN;
 		return {
 			productSlug,
 			iconSlug: productSlug + iconAppend,
 			displayName: item.getTitle(),
+			type,
+			subtypes: [],
 			tagline: get( item, 'getTagline', () => '' )(),
 			description: item.getDescription(),
 			monthlyProductSlug,
 			term: item.term === TERM_BIENNIALLY ? TERM_ANNUALLY : item.term,
 			features: [],
-			subtypes: [],
 		};
 	}
 	return null;
