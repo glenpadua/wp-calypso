@@ -39,11 +39,11 @@ type OwnProps = {
 	discountedPrice?: number;
 	withStartingPrice?: boolean;
 	billingTimeFrame: TranslateResult;
-	badgeLabel?: string;
-	discountMessage?: string;
+	badgeLabel?: TranslateResult;
+	discountMessage?: TranslateResult;
 	buttonLabel: TranslateResult;
 	onButtonClick: () => void;
-	cancelLabel?: string;
+	cancelLabel?: TranslateResult;
 	onCancelClick?: () => void;
 	isHighlighted?: boolean;
 	isOwned?: boolean;
