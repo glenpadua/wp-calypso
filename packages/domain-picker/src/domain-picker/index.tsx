@@ -257,7 +257,7 @@ const DomainPicker: FunctionComponent< Props > = ( {
 							allDomainSuggestions?.length &&
 							allDomainSuggestions?.length > quantity && (
 								<div className="domain-picker__show-more">
-									<Button onClick={ () => setIsExpanded( true ) }>
+									<Button onClick={ () => setIsExpanded( true ) } isSecondary>
 										{ __( 'View more results' ) }
 									</Button>
 								</div>
